@@ -15,6 +15,8 @@ DreamOS plugin to browse Mediathek libraries and playback or download movies.
 - Implements playback of media files as recording which gives the user full control like pause and skip forward/backward.
 - Searches for media files manually or from EPG using blue button.
 - Downloads Mediathek video files.
+- Supports multiple video file downloads in parallel.
+- Supports cover download.
 - Supports HD, FHD, and WQHD skin resolutions.
 
 ## Languages

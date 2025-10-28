@@ -25,7 +25,7 @@ from .DownloadTask import DownloadTaskFile, DownloadTaskHLS
 
 class DownloadJob(Job):
 
-    def __init__(self, url, segments, target_path, event_name, short_description, description, rec_time, service_ref, length):
+    def __init__(self, url, segments, target_path, event_name, short_description, description, rec_time, service_ref, length, web_site_url):
         logger.info("target_path: %s, event_name: %s, short_description: %s",
                     target_path, event_name, short_description)
         logger.debug("segments: %s", segments)
@@ -34,10 +34,10 @@ class DownloadJob(Job):
         self.keep = True
         if segments:
             DownloadTaskHLS(self, url, segments, target_path, event_name,
-                            short_description, description, rec_time, service_ref, length)
+                            short_description, description, rec_time, service_ref, length, web_site_url)
         else:
             DownloadTaskFile(self, url, target_path, event_name,
-                             short_description, description, rec_time, service_ref, length)
+                             short_description, description, rec_time, service_ref, length, web_site_url)
 
     def gettotalbytes(self):
         t = self.tasks[self.current_task]

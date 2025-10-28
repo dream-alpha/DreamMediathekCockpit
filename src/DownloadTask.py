@@ -19,9 +19,12 @@
 
 
 import os
+import re
 from urlparse import urljoin
+from six import ensure_str
 from Components.Task import Task
 from .WebRequestsAsync import WebRequestsAsync
+from .WebRequests import WebRequests
 from .Debug import logger
 from .ParserMetaFile import ParserMetaFile
 from .FileUtils import writeFile, deleteFiles, touchFile
@@ -64,11 +67,28 @@ def deleteFile(target_path):
         deleteFiles(os.path.splitext(target_path)[0] + ".*")
 
 
+def downloadCover(url, path):
+    if url:
+        web_request = WebRequests()
+        data = ensure_str(web_request.getContent(url))
+        url = re.findall(r'src":"([^"]+)', data, re.DOTALL)
+        if not url:
+            url = re.findall(r'image" content="([^"]+)', data, re.DOTALL)
+        if url:
+            url = url[0]
+            url = url.replace("{width}", "1080")
+            if "kika.de" in url or "arte.tv" in url:
+                url = url.split("?")[0]
+                if "arte.tv" in url:
+                    url = url + ".jpg"
+	    web_request.downloadFile(url, path)
+
+
 class DownloadTaskFile(Task):
 
     TASK_NAME = "download task"
 
-    def __init__(self, job, url, target_path, event_name, short_description, description, rec_time, service_ref, length):
+    def __init__(self, job, url, target_path, event_name, short_description, description, rec_time, service_ref, length, web_site_url):
         logger.info("job: %s, url: %s, target_path: %s, description: %s",
                     job, url, target_path, description)
         self.url = url
@@ -78,6 +98,7 @@ class DownloadTaskFile(Task):
         self.description = description
         self.rec_time = rec_time
         self.service_ref = service_ref
+        self.web_site_url = web_site_url
         self.length = length
         self.download = WebRequestsAsync()
         self.totalbytes = 0
@@ -94,6 +115,7 @@ class DownloadTaskFile(Task):
         logger.info("...")
         self.callback = callback
         touchFile(self.target_path)
+        downloadCover(self.web_site_url, os.path.splitext(self.target_path)[0] + ".jpg")
         loadDatabaseFile(self.target_path, self.event_name, self.short_description,
                          self.description, self.rec_time, self.service_ref, self.length)
 
@@ -131,7 +153,7 @@ class DownloadTaskFile(Task):
 class DownloadTaskHLS(Task):
     totalbytes = recvbytes = 0
 
-    def __init__(self, job, url, segments, target_path, event_name, short_description, description, rec_time, service_ref, length):
+    def __init__(self, job, url, segments, target_path, event_name, short_description, description, rec_time, service_ref, length, web_site_url):
         logger.info("job: %s, url: %s, target_path: %s, description: %s",
                     job, url, target_path, description)
         self.url = url
@@ -140,6 +162,7 @@ class DownloadTaskHLS(Task):
         self.event_name = event_name
         self.short_description = short_description
         self.description = description
+        self.web_site_url = web_site_url
         self.rec_time = rec_time
         self.service_ref = service_ref
         self.length = length
@@ -161,6 +184,7 @@ class DownloadTaskHLS(Task):
         logger.info("...")
         self.callback = callback
         touchFile(self.target_path)
+        downloadCover(self.web_site_url, os.path.splitext(self.target_path)[0] + ".jpg")
         loadDatabaseFile(self.target_path, self.event_name, self.short_description,
                          self.description, self.rec_time, self.service_ref, self.length)
         self.file_handle = open(self.target_path, "wb")

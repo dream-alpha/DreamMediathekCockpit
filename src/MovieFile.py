@@ -20,7 +20,7 @@
 
 import os
 from Components.config import config
-from .Constants import LIST_CHANNEL, LIST_TIMESTAMP, LIST_EVENT_NAME, LIST_SHORT_DESCRIPTION, LIST_DESCRIPTION, LIST_DURATION
+from .Constants import LIST_CHANNEL, LIST_TIMESTAMP, LIST_EVENT_NAME, LIST_SHORT_DESCRIPTION, LIST_DESCRIPTION, LIST_DURATION, LIST_URL_WEBSITE
 from .ChannelUtils import getServiceReference
 from .RecordingUtils import calcRecordingFilename
 from .DownloadJob import DownloadJob
@@ -68,7 +68,8 @@ class MovieFile:
                         curr[LIST_DESCRIPTION],
                         curr[LIST_TIMESTAMP],
                         service_ref,
-                        curr[LIST_DURATION]
+                        curr[LIST_DURATION],
+                        curr[LIST_URL_WEBSITE]
                     )
                 )
                 return url, recording_path
