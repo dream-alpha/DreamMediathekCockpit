@@ -81,7 +81,7 @@ def downloadCover(url, path):
                 url = url.split("?")[0]
                 if "arte.tv" in url:
                     url = url + ".jpg"
-	    web_request.downloadFile(url, path)
+            web_request.downloadFile(url, path)
 
 
 class DownloadTaskFile(Task):
