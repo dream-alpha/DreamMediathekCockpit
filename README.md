@@ -24,5 +24,4 @@ DreamOS plugin to browse Mediathek libraries and playback or download movies.
 - german
 
 ## Links
-- Installation: https://dream-alpha.github.io/MediathekCockpit
-- Support: https://github.com/dream-alpha/MediathekCockpit/discussions
+- Installation: https://dream-alpha.github.io/DreamMediathekCockpit
