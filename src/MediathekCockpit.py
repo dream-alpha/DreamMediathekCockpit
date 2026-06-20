@@ -80,8 +80,8 @@ class MediathekCockpit(Screen, Menu, ChannelSelection, Search):
                 "BLUE": self.pressBlue,
                 "MENU": self.openMenu,
                 "INFO": self.pressInfo,
-                "UP": self.movie_list.up,
-                "DOWN": self.movie_list.down,
+                "UPR": self.movie_list.up,
+                "DOWNR": self.movie_list.down,
                 "LEFTR": self.movie_list.left,
                 "RIGHTR": self.movie_list.right,
                 "5": self.showMovieInfo
@@ -96,6 +96,7 @@ class MediathekCockpit(Screen, Menu, ChannelSelection, Search):
 
     def __onLayoutFinish(self):
         logger.info("...")
+        listbox = self["list"].master and self["list"].master.master
         if self.query:
             query = self.query
             self.query = ""

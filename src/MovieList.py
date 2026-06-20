@@ -35,22 +35,29 @@ class MovieList(Query):
         self.list = []
         self.index = 0
         self.total_results = 0
+        self.page_size = 120
+        self.page = 1
         self.pages = 0
+        self.raw_offset = 0
 
     def getList(self, postdata, channel=None):
         logger.info("postdata: %s", postdata)
         self.postdata = postdata
         self.channel = channel
-        offset = postdata.get("offset", 0)
+        self.page_size = int(postdata.get("size", 120))
+        offset = int(postdata.get("offset", 0))
         if offset == 0:
             self.list = []
             self.index = 0
-        alist, self.total_results = self.download(postdata, channel)
+            self.raw_offset = 0
+        alist, self.total_results, result_count = self.download(postdata, channel)
+        self.raw_offset += result_count
         self.list += alist
         logger.debug("list: %s", self.list)
         self.parent["list"].setList(self.list)
         self.parent["list"].index = self.index
-        self.pages = (self.total_results + ROWS - 1) // ROWS
+        self.page = offset // self.page_size + 1
+        self.pages = max(1, (self.total_results + self.page_size - 1) // self.page_size)
         self.updateTitle()
 
     def getCurrentSelection(self):
@@ -71,7 +78,7 @@ class MovieList(Query):
         if self.index < len(self.list):
             self.parent["list"].index = self.index
         else:
-            self.postdata["offset"] = self.index
+            self.postdata["offset"] = self.raw_offset
             self.getList(self.postdata, self.channel)
         self.updateTitle()
 
@@ -82,18 +89,16 @@ class MovieList(Query):
 
     def right(self):
         self.index += ROWS
-        if self.index + ROWS < len(self.list):
-            logger.debug("index is still within the list bounds.")
+        if self.index < len(self.list):
             self.parent["list"].index = self.index
         else:
-            self.postdata["offset"] = len(self.list)
+            self.postdata["offset"] = self.raw_offset
             self.getList(self.postdata, self.channel)
         self.updateTitle()
 
     def updateTitle(self):
-        page = self.index // ROWS
         if self.list:
-            self.parent.title = self.parent.title_base + " - " + _("Page") + ": " + "%d/%d" % (page + 1, self.pages)
+            self.parent.title = self.parent.title_base + " - " + _("Page") + ": " + "%d/%d" % (self.page, self.pages)
         else:
             self.parent.title = self.parent.title_base + " - " + _("No movies available")
         logger.info("Updated title: %s", self.parent.title)

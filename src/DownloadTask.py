@@ -103,13 +103,17 @@ class DownloadTaskFile(Task):
         self.download = WebRequestsAsync()
         self.totalbytes = 0
         self.recvbytes = 0
+        self._aborted = False
+        self.web_client = None
         Task.__init__(self, job, self.TASK_NAME)
 
     def abort(self, *_args):
         logger.info("...")
+        self._aborted = True
         if self.web_client:
             self.web_client.cancel()
         deleteFile(self.target_path)
+        Task.processFinished(self, 1)
 
     def run(self, callback):
         logger.info("...")
@@ -139,12 +143,16 @@ class DownloadTaskFile(Task):
 
     def http_finished(self, _result):
         # logger.info("result: %s", _result)
+        if self._aborted:
+            return
         loadDatabaseFile(self.target_path, self.event_name, self.short_description,
                          self.description, self.rec_time, self.service_ref, self.length)
         Task.processFinished(self, 0)
 
     def http_failed(self, error_message=""):
         logger.info("...")
+        if self._aborted:
+            return
         logger.error("error_message: %s", error_message)
         deleteFile(self.target_path)
         Task.processFinished(self, 1)
@@ -170,15 +178,19 @@ class DownloadTaskHLS(Task):
         Task.__init__(self, job, "download task")
         self.totalbytes = len(segments)
         self.file_handle = None
+        self._aborted = False
+        self.web_client = None
 
     def abort(self, *_args):
         logger.info("...")
+        self._aborted = True
         self.segments = []
         if self.web_client:
             self.web_client.cancel()
         if self.file_handle and not self.file_handle.closed:
             self.file_handle.close()
-        self.http_failed("aborted")
+        deleteFile(self.target_path)
+        Task.processFinished(self, 1)
 
     def run(self, callback):
         logger.info("...")
@@ -201,11 +213,18 @@ class DownloadTaskHLS(Task):
     def http_finished(self, result):
         # logger.info("...")
         # logger.debug("segments: %s", self.segments)
+        if self._aborted:
+            return
         if result:
             content = result[1] if isinstance(result, tuple) else result
             self.file_handle.write(content)
         else:
-            self.segments = []
+            logger.error("Empty segment content received, aborting HLS download")
+            if self.file_handle and not self.file_handle.closed:
+                self.file_handle.close()
+            deleteFile(self.target_path)
+            Task.processFinished(self, 1)
+            return
         self.recvbytes += 1
         self.progress = int(
             round(self.end * self.recvbytes / float(self.totalbytes)))
@@ -221,6 +240,8 @@ class DownloadTaskHLS(Task):
 
     def http_failed(self, error):
         logger.info("...")
+        if self._aborted:
+            return
         if self.file_handle and not self.file_handle.closed:
             self.file_handle.close()
 

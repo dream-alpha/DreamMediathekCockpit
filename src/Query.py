@@ -62,8 +62,8 @@ class Query:
 
     def download(self, postdata, channel=None):
         logger.info("postdata: %s", postdata)
-        # result_count = 0
         total_results = 0
+        result_count = 0
         alist = []
         url = "https://mediathekviewweb.de/api/query"
         result = WebRequests().postContent(url, postdata)
@@ -98,20 +98,20 @@ class Query:
                 "%d.%m.%Y %H:%M:%S", localtime(int(query_info["filmlisteTimestamp"])))
             # logger.debug("query_info: %s", query_info)
             total_results = query_info["totalResults"]
-            # result_count = query_info["resultCount"]
+            result_count = query_info["resultCount"]
 
         logger.info("alist: %s", alist)
-        return alist, total_results
+        return alist, total_results, result_count
 
     def getMovieRow(self, x):
         logger.debug("x: %s", x)
         row = [""] * LIST_END
-        row[LIST_TIMESTAMP] = timestamp = int(x.get("timestamp", "0"))
+        row[LIST_TIMESTAMP] = timestamp = int(x.get("timestamp") or 0)
         row_datetime = datetime.fromtimestamp(
             timestamp).strftime("%d.%m.%Y %H:%M:%S")
         row[LIST_DATE] = row_datetime[0:10]
         row[LIST_TIME] = row_datetime[11:16]
-        row[LIST_DURATION] = int(x.get("duration", 0))
+        row[LIST_DURATION] = int(x.get("duration") or 0)
         row[LIST_CHANNEL] = channel = x.get("channel", "")
         row[LIST_CHANNEL_PIXMAP] = LoadPixmap(
             "%slogos/%s.png" % (plugindir, channel.replace(" ", "").upper())) if channel else None
@@ -146,8 +146,7 @@ class Query:
             if 0 < idx < len(description) - 1:
                 description = description[:idx + 1]
         row[LIST_DESCRIPTION] = description
-        size = x.get("size", 0)
-        row[LIST_SIZE] = int(size) if size is not None else 0
+        row[LIST_SIZE] = int(x.get("size") or 0)
         row[LIST_ID] = x.get("id", "")
         row[LIST_URL_VIDEO_LOW] = x.get("url_video_low", "")
         row[LIST_URL_VIDEO] = x.get("url_video", "")
